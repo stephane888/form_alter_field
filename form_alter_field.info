@@ -1,0 +1,5 @@
+name = form-alter-field
+description = permet d'alterer les champs des formulaires, permet d'ajouter les les champs dans les formulaires.  
+core = 7.x
+version = 7.x-1.0
+package = " module wbuniverse.com "

@@ -1,0 +1,12 @@
+<?php
+function form_alter_field_enable() {
+  $current = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
+  $addition = array('form_alter_field' => 'form_alter_fieldMailSystem');
+  variable_set('mail_system', array_merge($current, $addition));
+}
+
+function form_alter_field_disable() {
+  $mail_system = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
+  unset($mail_system['form_alter_field']);
+  variable_set('mail_system', $mail_system);
+}

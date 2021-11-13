@@ -1,0 +1,239 @@
+<?php
+
+function form_alter_field_form_alter(&$form, &$form_state, $form_id) {
+  global $user;
+  if ($form_id == 'webform_client_form_39') {
+    # validation et envoit du mail
+    $form['#validate'][] = 'form_alter_field_validation_send_mail';
+  }
+}
+
+/**
+ */
+function form_alter_field_validation_send_mail($form, &$form_state) {
+  /*
+   *
+   */
+  $valeurs = $form_state['values']["submitted"];
+  // echo '<pre>'; var_dump($valeurs); echo '<pre>';
+  // form_set_error('nom', t('le nom de la web-service existe déjà '));
+  $to = 'kksasteph888@gmail.com';
+  // $to = 'assistance@synergiebioconseils.com, kksasteph888@gmail.com';
+  $from = 'contact@o-de-mer.fr';
+  $nom_expediteur = 'Synergi-Bio';
+  $subjet = 'Nouveau patient identifier';
+  $body = '<h3> contenu du message </h3>
+	<table>
+		<tr>
+			<td> Nom : </td>
+			<td>vide</td>
+		</tr>
+		<tr>
+			<td> Tél : </td>
+			<td>vide</td>
+		</tr>
+	</table>
+	'; /* */
+  // form_alter_field_sendmail($to, $from, $nom_expediteur, $subjet, $body);
+}
+
+/**
+ */
+function form_alter_field_sendmail($to, $from, $nom_expediteur, $subjet, $body) {
+  // debugLog::logs($body, 'aa_sendmail', 'kint', true);
+  /*
+   * $_SendMail = new form_alter_field_CustomSendMAil();
+   * $_SendMail->from = $from;
+   * $_SendMail->to = $to;
+   * $_SendMail->lang = language_default();
+   * $_SendMail->params = array(
+   * 'body' => $body,
+   * 'subject' => $subjet,
+   * 'Sender' => $nom_expediteur,
+   * 'Return-Path' => $from,
+   * );
+   * $_SendMail->sendMail();
+   */
+  $lang = language_default();
+
+  $params = array(
+    'body' => $body,
+    'subject' => $subjet,
+    'Sender' => $nom_expediteur,
+    'Return-Path' => $from
+  );
+  drupal_mail('form_alter_field', 'node_mail', $to, $lang, $params, $from);
+}
+
+/**
+ */
+function form_alter_field_mail_alter(&$message) {
+  // debugLog::logs($message, 'aa_message_alter', 'kint', true);
+  /*
+   * $path_of_module = drupal_get_path('module', 'form_alter_field'); //path_to_theme(); //drupal_get_path('module', 'revolutionslider');
+   * if(!file_exists($path_of_module.'/files/doc')) {mkdir($path_of_module.'/files/doc'); }
+   * $filename = $path_of_module.'/files/doc/message_mail_alte__'. time().'_'. rand (1 , 99999) .'.inc';
+   * ob_start();
+   * var_dump($message);
+   * $result = ob_get_clean();
+   * //if (!file_exists($filename) )
+   * {
+   * $monfichier = fopen($filename, 'w+');
+   * fputs($monfichier, $result);
+   * fclose($monfichier);
+   * }
+   * /*
+   */
+}
+
+/**
+ * to use drupal_mail('form_alter_field', 'node_mail', $to, $lang, $params, $from);
+ * $lang = language_default();
+ * $params = array(
+ * 'body' => $body,
+ * 'subject' => $subject,
+ * 'headers' => array(
+ * 'Bcc' => $header_bcc, //Copie carbone invisible
+ * 'Cc' => $header_cc // Copie carbone visible
+ * )
+ * );
+ */
+function form_alter_field_mail($key, &$message, $params) {
+
+  // debugLog::logs($key, 'aa_language', 'kint', true);
+  switch ($key) {
+    case 'node_mail':
+      $string = t('reservation_' . $params['subject']);
+      $string = str_replace("reservation_", "", $string);
+      $message['headers']['Content-Type'] = 'text/html; charset=utf-8';
+      $message['subject'] = $string;
+      $message['body'][] = $params['body'];
+      $message["headers"]["Sender"] = $params['Sender'];
+      $message["headers"]["Return-Path"] = $params['Return-Path'];
+      $message["headers"]["From"] = '"' . $message["headers"]["Sender"] . '" <' . $message["headers"]["From"] . '>';
+      // $message['headers']['Bcc']='comptabilite@team-commerce.com';
+      // Add attachment when available.
+
+      if (isset($params['attachment'])) {
+        $message['params']['attachments'][] = $params['attachment'];
+      }
+      break;
+  }
+}
+
+# ########### obligatoire pour son fonctionnement.
+// $path_of_module = drupal_get_path('module', 'debug_log'); // path_to_theme(); //drupal_get_path('module', 'revolutionslider');
+// $path_of_module = DRUPAL_ROOT . '/' . $path_of_module;
+// require_once $path_of_module . '/debugLog.php';
+class form_alter_fieldMailSystem extends DefaultMailSystem {
+
+  public function __construct() {
+    // debugLog::logs('', 'aa_classDefaultMailSystem', 'kint', true);
+  }
+
+  public function format(array $message) {
+    $message['body'] = implode("\n\n", $message['body']);
+    $message['body'] = drupal_wrap_mail($message['body']);
+    return $message;
+  }
+}
+
+# ######## permettant d'envoyer les mail #############
+class form_alter_field_CustomSendMAil {
+
+  public $params = null, $to = null, $lang = null, $from = null;
+
+  /**
+   */
+  public function sendMail() {
+    // if(empty($params)){return 0;}
+    drupal_mail('form_alter_field', 'node_mail', $this->to, $this->lang, $this->params, $this->from);
+  }
+
+  /**
+   */
+  public function gestionEnvoitEmails() {
+    $this->lang = language_default();
+    $this->from = $this->row_newsletter->data_email_send;
+    $this->params = array(
+      'body' => $this->dataMail,
+      'subject' => $this->row_newsletter->data_subject,
+      'Sender' => $this->row_newsletter->data_name_email_send,
+      'Return-Path' => $this->row_newsletter->data_email_send
+      # impossible d'utiliser cette fonction car désativé par la majorité des serveurs hébergement partager.
+      /*
+     * 'headers' => array(
+     * 'Bcc' => $this->listeEmail, //Copie carbone invisible
+     * //'Cc' => 'kksasteph888@gmail.com, stephanekouwa@gmail.com, nsana.npc@gmail.com' // Copie carbone visible
+     * )
+     */
+    );
+    $this->to = $email;
+    $this->sendMail();
+  }
+}
+
+/**
+ * hook implement hook_node_load
+ */
+function form_alter_field_node_load($entity, $type) {
+
+/**
+ * Add translate
+ */
+  /*
+   * if(isset($entity['44'])){
+   * $node = $entity['44'];
+   * //debugLog::logs($node, 'aa_node_load', 'kint', true);
+   * if(!empty($node->field_breve_description) && isset($node->field_breve_description['und'][0]['value']) ){
+   * $string = t('reservation_mail_' . $node->field_breve_description['und'][0]['value']);
+   * $node->field_breve_description['und'][0]['value'] = str_replace('reservation_mail_', "", $string);
+   * }
+   * }
+   */
+  // dpm($entity);
+}
+
+function form_alter_field_node_view_alter(&$build) {
+  // dpm($build);
+}
+
+/**
+ * Pour surplanter l'editeur de mail.
+ *
+ * @param array $vars
+ */
+function form_alter_field_preprocess_webform_mail_message(&$vars) {
+  // dpm('form_alter_field_preprocess_webform_mail_message');
+  // debugLog::logs($vars, 'aa_preprocess_webform_mail_message', 'kint', true);
+}
+
+function form_alter_field_preprocess_webform_form(&$vars) {
+  /*
+   * if(isset($vars['form']['#node']) && isset($vars['form']['#node']->field_breve_description)){
+   * dpm('form_alter_field_preprocess_webform_form');
+   * $node = $vars['form']['#node'];
+   * $string = t('reservation_mail_' . $node->field_breve_description['und'][0]['value']);
+   * $node->field_breve_description['und'][0]['value'] = str_replace('reservation_mail_', "", $string);
+   * $node->field_breve_description['und'][0]['safe_value'] = str_replace('reservation_mail_', "", $string);
+   * $vars['form']['#node'] = $node;
+   * }
+   * debugLog::logs($vars, 'aa_form_alter_field_preprocess_webform_form', 'kint', true);
+   */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
